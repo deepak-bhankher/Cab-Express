@@ -100,7 +100,7 @@ function BookingCard() {
 
   return (
     <div className="relative w-full max-w-md bg-white/95 backdrop-blur-xl rounded-2xl shadow-[0_25px_70px_rgba(0,4,40,0.55)] border border-white/50 overflow-hidden">
-      <div className="h-1.5 bg-gradient-to-r from-[#004e92] via-[#0072c6] to-[#D4AF37]" />
+      <div className="h-1.5 bg-gradient-to-r from-[#004e92] via-[#0072c6] to-[#001845]" />
       <div className="p-6 sm:p-7">
         <AnimatePresence mode="wait">
           {step === STEPS.SEARCH && (
@@ -126,7 +126,7 @@ function BookingCard() {
                   />
                 </div>
                 <div className="flex items-center gap-3 bg-[#F5F7FA] rounded-xl border border-[#000428]/10 px-4 py-3 focus-within:border-[#004e92] transition-colors">
-                  <Navigation size={18} className="text-[#D4AF37] shrink-0" />
+                  <Navigation size={18} className="text-[#0072c6] shrink-0" />
                   <input
                     value={drop}
                     onChange={(e) => setDrop(e.target.value)}
@@ -141,7 +141,7 @@ function BookingCard() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#004e92] to-[#000428] text-white font-bold text-sm py-3.5 rounded-xl transition-all hover:shadow-[0_10px_30px_rgba(0,78,146,0.45)] hover:-translate-y-0.5 disabled:opacity-60"
+                className="w-full flex items-center  cursor-pointer  justify-center gap-2 bg-gradient-to-r from-[#004e92] to-[#000428] text-white font-bold text-sm py-3.5 rounded-xl transition-all hover:shadow-[0_10px_30px_rgba(0,78,146,0.45)] hover:-translate-y-0.5 disabled:opacity-60"
               >
                 {loading ? <Loader2 size={18} className="animate-spin" /> : <Search size={18} />}
                 Search Taxi
@@ -172,7 +172,7 @@ function BookingCard() {
                   <p className="text-white/70 text-xs">{pickup} → {drop}</p>
                   <p className="text-white/40 text-[11px] mt-0.5">Estimated fare</p>
                 </div>
-                <div className="text-[#D4AF37] text-2xl font-mono font-bold">
+                <div className="text-white text-2xl font-mono font-bold">
                   ₹{fare}
                 </div>
               </div>
@@ -203,7 +203,7 @@ function BookingCard() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#D4AF37] to-[#c19b2e] text-[#000428] font-bold text-sm py-3.5 rounded-xl transition-all hover:shadow-[0_10px_30px_rgba(212,175,55,0.45)] hover:-translate-y-0.5 disabled:opacity-60"
+                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#004e92] to-[#000428] text-white font-bold text-sm py-3.5 rounded-xl transition-all hover:shadow-[0_10px_30px_rgba(0,78,146,0.45)] hover:-translate-y-0.5 disabled:opacity-60"
               >
                 {loading ? <Loader2 size={18} className="animate-spin" /> : null}
                 Book Taxi
@@ -251,22 +251,22 @@ export default function Home() {
           className="absolute inset-0 [mask-image:radial-gradient(ellipse_at_top,black,transparent_75%)]"
           style={{
             backgroundImage:
-              "linear-gradient(rgba(212,175,55,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(212,175,55,0.06) 1px, transparent 1px)",
+              "linear-gradient(rgba(0,114,198,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(0,114,198,0.08) 1px, transparent 1px)",
             backgroundSize: "48px 48px",
           }}
         />
-        <div className="absolute -top-24 -right-24 w-[30rem] h-[30rem] bg-[#D4AF37]/10 rounded-full blur-3xl" />
+        <div className="absolute -top-24 -right-24 w-[30rem] h-[30rem] bg-[#0072c6]/10 rounded-full blur-3xl" />
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#004e92]/30 rounded-full blur-3xl" />
 
         <div className="relative max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-14 items-center">
           <motion.div initial="hidden" animate="show" variants={fadeUp}>
-            <span className="inline-flex items-center gap-2 bg-white/5 border border-[#D4AF37]/30 text-[#D4AF37] text-xs font-mono tracking-widest uppercase px-3 py-1.5 rounded-full mb-6">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF37] animate-pulse" />
+            <span className="inline-flex items-center gap-2 bg-white/5 border border-[#0072c6]/30 text-[#66c2ff] text-xs font-mono tracking-widest uppercase px-3 py-1.5 rounded-full mb-6">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#0072c6] animate-pulse" />
               Now booking across your city
             </span>
             <h1 className="font-bold text-4xl sm:text-5xl lg:text-6xl text-white leading-[1.05] tracking-tight">
               Your ride is a
-              <span className="bg-gradient-to-r from-[#D4AF37] to-[#f2d878] bg-clip-text text-transparent"> tap</span> away.
+              <span className="bg-gradient-to-r from-[#0072c6] to-[#66c2ff] bg-clip-text text-transparent"> tap</span> away.
             </h1>
             <p className="mt-6 text-white/60 text-lg max-w-md">
               Enter your pickup and drop, see your fare instantly, and book —
@@ -275,7 +275,7 @@ export default function Home() {
 
             <div className="mt-10 flex items-center gap-8">
               <div>
-                <p className="text-2xl font-bold text-white">4.9<span className="text-[#D4AF37]">★</span></p>
+                <p className="text-2xl font-bold text-white">4.9<span className="text-[#66c2ff]">★</span></p>
                 <p className="text-white/40 text-xs mt-1">Rider rating</p>
               </div>
               <div className="w-px h-10 bg-white/10" />
@@ -329,10 +329,10 @@ export default function Home() {
                 viewport={{ once: true, amount: 0.4 }}
                 variants={fadeUp}
                 transition={{ delay: i * 0.12 }}
-                className="bg-white rounded-2xl p-7 border border-[#000428]/5 hover:border-[#D4AF37]/50 hover:shadow-[0_20px_40px_rgba(0,4,40,0.08)] transition-all"
+                className="bg-white rounded-2xl p-7 border border-[#000428]/5 hover:border-[#0072c6]/50 hover:shadow-[0_20px_40px_rgba(0,4,40,0.08)] transition-all"
               >
                 <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#004e92] to-[#000428] flex items-center justify-center mb-5">
-                  <s.icon size={20} className="text-[#D4AF37]" />
+                  <s.icon size={20} className="text-white" />
                 </div>
                 <h3 className="font-bold text-lg text-[#000428] mb-2">
                   {s.title}
@@ -354,7 +354,7 @@ export default function Home() {
             variants={fadeUp}
             className="flex items-center gap-2 mb-12"
           >
-            <Star size={18} className="text-[#D4AF37] fill-[#D4AF37]" />
+            <Star size={18} className="text-[#66c2ff] fill-[#66c2ff]" />
             <p className="text-white/70 text-sm">
               Trusted by riders across the city
             </p>
@@ -371,7 +371,7 @@ export default function Home() {
                 transition={{ delay: i * 0.12 }}
                 className="flex gap-4"
               >
-                <t.icon size={22} className="text-[#D4AF37] shrink-0 mt-1" />
+                <t.icon size={22} className="text-[#0072c6] shrink-0 mt-1" />
                 <div>
                   <h4 className="font-bold text-white text-base mb-1">
                     {t.title}
@@ -387,13 +387,13 @@ export default function Home() {
       </section>
 
       {/* CTA */}
-      <section className="bg-gradient-to-r from-[#D4AF37] to-[#e8c968] py-16">
+      <section className="bg-gradient-to-r from-[#004e92] to-[#0072c6] py-16">
         <div className="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-6">
           <div>
-            <h3 className="font-bold text-2xl sm:text-3xl text-[#000428]">
+            <h3 className="font-bold text-2xl sm:text-3xl text-white">
               Ready when you are.
             </h3>
-            <p className="text-[#000428]/70 mt-1">
+            <p className="text-white/70 mt-1">
               Book your first ride in under a minute.
             </p>
           </div>
@@ -403,7 +403,7 @@ export default function Home() {
               e.preventDefault();
               window.scrollTo({ top: 0, behavior: "smooth" });
             }}
-            className="bg-gradient-to-r from-[#000428] to-[#004e92] text-white font-bold text-sm px-7 py-3.5 rounded-full hover:shadow-[0_10px_30px_rgba(0,4,40,0.4)] hover:-translate-y-0.5 transition-all shrink-0"
+            className="bg-[#000428] text-white font-bold text-sm px-7 py-3.5 rounded-full hover:shadow-[0_10px_30px_rgba(0,4,40,0.4)] hover:-translate-y-0.5 transition-all shrink-0"
           >
             Book a taxi now
           </a>
