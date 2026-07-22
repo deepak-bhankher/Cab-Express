@@ -17,6 +17,27 @@ const fadeUp = {
   show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } },
 };
 
+const staggerGrid = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.1 } },
+};
+
+const floatSlow = {
+  animate: {
+    y: [0, 20, 0],
+    x: [0, 10, 0],
+    transition: { duration: 11, repeat: Infinity, ease: "easeInOut" },
+  },
+};
+
+const floatSlower = {
+  animate: {
+    y: [0, -18, 0],
+    x: [0, -10, 0],
+    transition: { duration: 14, repeat: Infinity, ease: "easeInOut" },
+  },
+};
+
 const contactInfo = [
   {
     icon: Phone,
@@ -67,7 +88,7 @@ export default function Contact() {
   }
 
   return (
-    <section className="relative bg-gradient-to-br from-[#000428] via-[#001845] to-[#000428] py-24 overflow-hidden">
+    <section className="relative bg-gradient-to-br from-[#000428] via-[#001845] to-[#000428] py-24 pt-32 overflow-hidden">
       {/* grid + glow, matches hero */}
       <div
         className="absolute inset-0 opacity-40 [mask-image:radial-gradient(ellipse_at_top,black,transparent_70%)]"
@@ -77,8 +98,16 @@ export default function Contact() {
           backgroundSize: "48px 48px",
         }}
       />
-      <div className="absolute -top-24 -left-24 w-96 h-96 bg-[#004e92]/20 rounded-full blur-3xl" />
-      <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-[#0072c6]/10 rounded-full blur-3xl" />
+      <motion.div
+        variants={floatSlow}
+        animate="animate"
+        className="absolute -top-24 -left-24 w-96 h-96 bg-[#004e92]/20 rounded-full blur-3xl"
+      />
+      <motion.div
+        variants={floatSlower}
+        animate="animate"
+        className="absolute -bottom-24 -right-24 w-96 h-96 bg-[#0072c6]/10 rounded-full blur-3xl"
+      />
 
       <div className="relative max-w-7xl mx-auto px-6">
         <motion.div
@@ -106,13 +135,16 @@ export default function Contact() {
             initial="hidden"
             whileInView="show"
             viewport={{ once: true, amount: 0.3 }}
-            variants={fadeUp}
+            variants={staggerGrid}
             className="grid sm:grid-cols-2 lg:grid-cols-1 gap-4"
           >
             {contactInfo.map((c) => (
-              <div
+              <motion.div
                 key={c.title}
-                className="flex items-start gap-4 bg-white/5 border border-white/10 rounded-2xl p-5 hover:border-[#0072c6]/40 hover:bg-white/[0.07] transition-all"
+                variants={fadeUp}
+                whileHover={{ y: -4, x: 2 }}
+                transition={{ type: "spring", stiffness: 280, damping: 22 }}
+                className="flex items-start gap-4 bg-white/5 border border-white/10 rounded-2xl p-5 hover:border-[#0072c6]/40 hover:bg-white/[0.07] transition-colors"
               >
                 <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#004e92] to-[#0072c6] flex items-center justify-center shrink-0">
                   <c.icon size={18} className="text-white" />
@@ -122,7 +154,7 @@ export default function Contact() {
                   <p className="text-[#66c2ff] text-sm mt-1">{c.text}</p>
                   <p className="text-white/40 text-xs mt-0.5">{c.sub}</p>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </motion.div>
 
@@ -132,6 +164,8 @@ export default function Contact() {
             whileInView="show"
             viewport={{ once: true, amount: 0.3 }}
             variants={fadeUp}
+            whileHover={{ y: -3 }}
+            transition={{ type: "spring", stiffness: 260, damping: 24 }}
             className="relative bg-white/95 backdrop-blur-xl rounded-2xl shadow-[0_25px_70px_rgba(0,4,40,0.55)] border border-white/50 overflow-hidden"
           >
             <div className="h-1.5 bg-gradient-to-r from-[#004e92] via-[#0072c6] to-[#001845]" />
@@ -178,10 +212,13 @@ export default function Contact() {
 
                   {error && <p className="text-sm text-red-600">{error}</p>}
 
-                  <button
+                  <motion.button
                     type="submit"
                     disabled={loading}
-                    className="w-full flex items-center cursor-pointer justify-center gap-2 bg-gradient-to-r from-[#004e92] to-[#000428] text-white font-bold text-sm py-3.5 rounded-xl transition-all hover:shadow-[0_10px_30px_rgba(0,78,146,0.45)] hover:-translate-y-0.5 disabled:opacity-60"
+                    whileHover={{ y: -2, boxShadow: "0 14px 34px rgba(0,78,146,0.5)" }}
+                    whileTap={{ scale: 0.97 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 20 }}
+                    className="w-full flex items-center cursor-pointer justify-center gap-2 bg-gradient-to-r from-[#004e92] to-[#000428] text-white font-bold text-sm py-3.5 rounded-xl disabled:opacity-60"
                   >
                     {loading ? (
                       <Loader2 size={18} className="animate-spin" />
@@ -189,11 +226,17 @@ export default function Contact() {
                       <Send size={18} />
                     )}
                     Send Message
-                  </button>
+                  </motion.button>
                 </form>
               ) : (
                 <div className="text-center py-6 space-y-3">
-                  <CheckCircle2 size={44} className="text-[#004e92] mx-auto" />
+                  <motion.div
+                    initial={{ scale: 0, rotate: -20 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    transition={{ type: "spring", stiffness: 260, damping: 14, delay: 0.1 }}
+                  >
+                    <CheckCircle2 size={44} className="text-[#004e92] mx-auto" />
+                  </motion.div>
                   <p className="font-bold text-[#000428] text-lg">
                     Message sent!
                   </p>

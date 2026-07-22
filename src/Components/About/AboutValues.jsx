@@ -6,6 +6,11 @@ const fadeUp = {
   show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } },
 };
 
+const staggerGrid = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.12 } },
+};
+
 const points = [
   {
     icon: Target,
@@ -35,16 +40,20 @@ export default function AboutValues() {
   return (
     <section className="bg-[#F5F7FA] py-20">
       <div className="max-w-5xl mx-auto px-6">
-        <div className="space-y-6 mb-16">
-          {points.map((p, i) => (
+        <motion.div
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, amount: 0.3 }}
+          variants={staggerGrid}
+          className="space-y-6 mb-16"
+        >
+          {points.map((p) => (
             <motion.div
               key={p.title}
-              initial="hidden"
-              whileInView="show"
-              viewport={{ once: true, amount: 0.4 }}
               variants={fadeUp}
-              transition={{ delay: i * 0.1 }}
-              className="flex gap-6 items-start bg-white rounded-2xl p-7 border border-[#000428]/5 hover:border-[#0072c6]/40 hover:shadow-[0_20px_40px_rgba(0,4,40,0.08)] transition-all"
+              whileHover={{ y: -6, scale: 1.01 }}
+              transition={{ type: "spring", stiffness: 260, damping: 22 }}
+              className="flex gap-6 items-start bg-white rounded-2xl p-7 border border-[#000428]/5 hover:border-[#0072c6]/40 hover:shadow-[0_20px_40px_rgba(0,4,40,0.08)] transition-shadow"
             >
               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#004e92] to-[#000428] flex items-center justify-center shrink-0">
                 <p.icon size={22} className="text-white" />
@@ -57,7 +66,7 @@ export default function AboutValues() {
               </div>
             </motion.div>
           ))}
-        </div>
+        </motion.div>
 
         <motion.div
           initial="hidden"
@@ -66,11 +75,18 @@ export default function AboutValues() {
           variants={fadeUp}
           className="bg-gradient-to-br from-[#000428] to-[#004e92] rounded-2xl p-10 grid grid-cols-2 sm:grid-cols-4 gap-8"
         >
-          {stats.map((s) => (
-            <div key={s.label} className="text-center">
+          {stats.map((s, i) => (
+            <motion.div
+              key={s.label}
+              initial={{ opacity: 0, y: 14 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.4 }}
+              transition={{ delay: i * 0.1, duration: 0.5 }}
+              className="text-center"
+            >
               <p className="text-3xl font-bold text-white">{s.value}</p>
               <p className="text-white/50 text-xs mt-1">{s.label}</p>
-            </div>
+            </motion.div>
           ))}
         </motion.div>
       </div>

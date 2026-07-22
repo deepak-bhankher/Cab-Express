@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 import {
   MapPin,
   Phone,
@@ -15,12 +16,21 @@ const fadeUp = {
   show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } },
 };
 
+const floatSlow = {
+  animate: {
+    y: [0, -16, 0],
+    x: [0, 10, 0],
+    transition: { duration: 12, repeat: Infinity, ease: "easeInOut" },
+  },
+};
+
 const quickLinks = [
-  { label: "Home", href: "#" },
-  { label: "How it works", href: "#how-it-works" },
-  { label: "Fares", href: "#fares" },
-  { label: "About us", href: "#about" },
-  { label: "Contact", href: "#contact" },
+  { label: "Home", href: "/" },
+  { label: "About", href: "/about" },
+  { label: "Services", href: "/services" },
+  { label: "Pricing", href: "/pricing" },
+  { label: "FAQ", href: "/faq" },
+  { label: "Contact", href: "/contact" },
 ];
 
 const cities = [
@@ -50,7 +60,11 @@ export default function Footer() {
           backgroundSize: "48px 48px",
         }}
       />
-      <div className="absolute -bottom-32 -left-20 w-80 h-80 bg-[#004e92]/20 rounded-full blur-3xl" />
+      <motion.div
+        variants={floatSlow}
+        animate="animate"
+        className="absolute -bottom-32 -left-20 w-80 h-80 bg-[#004e92]/20 rounded-full blur-3xl"
+      />
       <div className="absolute -top-16 right-0 w-72 h-72 bg-[#0072c6]/10 rounded-full blur-3xl" />
 
       <div className="relative max-w-7xl mx-auto px-6 pt-20 pb-10">
@@ -63,14 +77,14 @@ export default function Footer() {
         >
           {/* Brand */}
           <div>
-            <div className="flex items-center gap-2">
+            <Link to="/" className="flex items-center gap-2 w-fit">
               <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#004e92] to-[#0072c6] flex items-center justify-center">
                 <MapPin size={18} className="text-white" />
               </div>
               <span className="font-bold text-xl text-white tracking-tight">
-                RideNow
+                MyCab<span className="text-[#66c2ff]">Express</span>
               </span>
-            </div>
+            </Link>
             <p className="text-white/50 text-sm mt-5 leading-relaxed max-w-xs">
               Upfront fares, verified drivers, and a booking that confirms in
               seconds — no calling, no haggling.
@@ -89,12 +103,12 @@ export default function Footer() {
             <ul className="space-y-3">
               {quickLinks.map((l) => (
                 <li key={l.label}>
-                  <a
-                    href={l.href}
-                    className="text-white/50 text-sm hover:text-[#66c2ff] transition-colors"
+                  <Link
+                    to={l.href}
+                    className="text-white/50 text-sm hover:text-[#66c2ff] hover:translate-x-1 transition-all inline-block"
                   >
                     {l.label}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -108,7 +122,7 @@ export default function Footer() {
                 <li key={c.label}>
                   <a
                     href={c.href}
-                    className="text-white/50 text-sm hover:text-[#66c2ff] transition-colors"
+                    className="text-white/50 text-sm hover:text-[#66c2ff] hover:translate-x-1 transition-all inline-block"
                   >
                     {c.label}
                   </a>
@@ -149,14 +163,17 @@ export default function Footer() {
 
             <div className="flex items-center gap-3 mt-6">
               {socials.map((s) => (
-                <a
+                <motion.a
                   key={s.label}
                   href={s.href}
                   aria-label={s.label}
+                  whileHover={{ y: -3, scale: 1.08 }}
+                  whileTap={{ scale: 0.94 }}
+                  transition={{ type: "spring", stiffness: 320, damping: 18 }}
                   className="w-9 h-9 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/50 hover:text-[#66c2ff] hover:border-[#0072c6]/50 transition-colors"
                 >
                   <s.icon size={15} />
-                </a>
+                </motion.a>
               ))}
             </div>
           </div>

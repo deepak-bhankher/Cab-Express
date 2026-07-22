@@ -16,10 +16,44 @@ import {
   Loader2,
   ArrowLeft,
 } from "lucide-react";
+import { createBooking } from "../lib/api";
+import { calculateFare } from "../lib/fareCalculator";
+import CityInput from "../components/Cityinput";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
   show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } },
+};
+
+const heroContainer = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.12 } },
+};
+
+const heroItem = {
+  hidden: { opacity: 0, y: 22 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] } },
+};
+
+const staggerGrid = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.12 } },
+};
+
+const floatSlow = {
+  animate: {
+    y: [0, 24, 0],
+    x: [0, 12, 0],
+    transition: { duration: 10, repeat: Infinity, ease: "easeInOut" },
+  },
+};
+
+const floatSlower = {
+  animate: {
+    y: [0, -20, 0],
+    x: [0, -14, 0],
+    transition: { duration: 13, repeat: Infinity, ease: "easeInOut" },
+  },
 };
 
 const steps = [
@@ -46,7 +80,7 @@ const trust = [
   { icon: Clock, title: "On-time pickups", text: "Real people confirming your ride, not a black-box algorithm." },
 ];
 
-// ---- Inline booking card (placeholder fare, no backend call yet) ----
+// ---- Booking card — connected to the real backend ----
 const STEPS = { SEARCH: "search", FARE: "fare", DONE: "done" };
 
 function BookingCard() {
@@ -56,25 +90,37 @@ function BookingCard() {
   const [phone, setPhone] = useState("");
   const [name, setName] = useState("");
   const [fare, setFare] = useState(null);
+  const [distanceKm, setDistanceKm] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  function handleSearch(e) {
+  async function handleSearch(e) {
     e.preventDefault();
     setError("");
     if (!pickup.trim() || !drop.trim()) {
       setError("Enter both pickup and drop location");
       return;
     }
+    if (pickup.trim() === drop.trim()) {
+      setError("Pickup and drop can't be the same city");
+      return;
+    }
     setLoading(true);
+    // Calculated locally from city coordinates — works for any route
+    const result = calculateFare(pickup.trim(), drop.trim());
     setTimeout(() => {
-      setFare(499);
-      setStep(STEPS.FARE);
+      if (!result) {
+        setError("We don't service one of these cities yet.");
+      } else {
+        setFare(result.fare);
+        setDistanceKm(result.distanceKm);
+        setStep(STEPS.FARE);
+      }
       setLoading(false);
-    }, 500);
+    }, 350);
   }
 
-  function handleBook(e) {
+  async function handleBook(e) {
     e.preventDefault();
     setError("");
     if (!name.trim() || !/^\d{10}$/.test(phone.trim())) {
@@ -82,10 +128,21 @@ function BookingCard() {
       return;
     }
     setLoading(true);
-    setTimeout(() => {
+    try {
+      // Calls POST /api/bookings on your backend — saves to MongoDB
+      await createBooking({
+        passengerName: name.trim(),
+        phoneNumber: phone.trim(),
+        pickupLocation: pickup.trim(),
+        dropLocation: drop.trim(),
+        fare,
+      });
       setStep(STEPS.DONE);
+    } catch (err) {
+      setError("Could not book right now. Make sure the backend server is running.");
+    } finally {
       setLoading(false);
-    }, 500);
+    }
   }
 
   function reset() {
@@ -95,11 +152,16 @@ function BookingCard() {
     setPhone("");
     setName("");
     setFare(null);
+    setDistanceKm(null);
     setError("");
   }
 
   return (
-    <div className="relative w-full max-w-md bg-white/95 backdrop-blur-xl rounded-2xl shadow-[0_25px_70px_rgba(0,4,40,0.55)] border border-white/50 overflow-hidden">
+    <motion.div
+      whileHover={{ y: -4 }}
+      transition={{ type: "spring", stiffness: 260, damping: 24 }}
+      className="relative w-full max-w-md bg-white/95 backdrop-blur-xl rounded-2xl shadow-[0_25px_70px_rgba(0,4,40,0.55)] border border-white/50 overflow-hidden"
+    >
       <div className="h-1.5 bg-gradient-to-r from-[#004e92] via-[#0072c6] to-[#001845]" />
       <div className="p-6 sm:p-7">
         <AnimatePresence mode="wait">
@@ -116,36 +178,35 @@ function BookingCard() {
               <p className="font-bold text-[#000428] text-lg">Where are you headed?</p>
 
               <div className="space-y-3">
-                <div className="flex items-center gap-3 bg-[#F5F7FA] rounded-xl border border-[#000428]/10 px-4 py-3 focus-within:border-[#004e92] transition-colors">
-                  <MapPin size={18} className="text-[#004e92] shrink-0" />
-                  <input
-                    value={pickup}
-                    onChange={(e) => setPickup(e.target.value)}
-                    placeholder="Pickup location"
-                    className="w-full bg-transparent outline-none text-sm text-[#000428] placeholder:text-[#000428]/40"
-                  />
-                </div>
-                <div className="flex items-center gap-3 bg-[#F5F7FA] rounded-xl border border-[#000428]/10 px-4 py-3 focus-within:border-[#004e92] transition-colors">
-                  <Navigation size={18} className="text-[#0072c6] shrink-0" />
-                  <input
-                    value={drop}
-                    onChange={(e) => setDrop(e.target.value)}
-                    placeholder="Drop location"
-                    className="w-full bg-transparent outline-none text-sm text-[#000428] placeholder:text-[#000428]/40"
-                  />
-                </div>
+                <CityInput
+                  value={pickup}
+                  onChange={setPickup}
+                  placeholder="Pickup location"
+                  icon={MapPin}
+                  iconClassName="text-[#004e92]"
+                />
+                <CityInput
+                  value={drop}
+                  onChange={setDrop}
+                  placeholder="Drop location"
+                  icon={Navigation}
+                  iconClassName="text-[#0072c6]"
+                />
               </div>
 
               {error && <p className="text-sm text-red-600">{error}</p>}
 
-              <button
+              <motion.button
                 type="submit"
                 disabled={loading}
-                className="w-full flex items-center  cursor-pointer  justify-center gap-2 bg-gradient-to-r from-[#004e92] to-[#000428] text-white font-bold text-sm py-3.5 rounded-xl transition-all hover:shadow-[0_10px_30px_rgba(0,78,146,0.45)] hover:-translate-y-0.5 disabled:opacity-60"
+                whileHover={{ y: -2, boxShadow: "0 14px 34px rgba(0,78,146,0.5)" }}
+                whileTap={{ scale: 0.97 }}
+                transition={{ type: "spring", stiffness: 400, damping: 20 }}
+                className="w-full flex items-center cursor-pointer justify-center gap-2 bg-gradient-to-r from-[#004e92] to-[#000428] text-white font-bold text-sm py-3.5 rounded-xl disabled:opacity-60"
               >
                 {loading ? <Loader2 size={18} className="animate-spin" /> : <Search size={18} />}
                 Search Taxi
-              </button>
+              </motion.button>
             </motion.form>
           )}
 
@@ -167,15 +228,22 @@ function BookingCard() {
                 <ArrowLeft size={14} /> Change route
               </button>
 
-              <div className="bg-gradient-to-br from-[#000428] to-[#004e92] rounded-xl p-4 flex items-center justify-between">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.96 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.35, ease: "easeOut" }}
+                className="bg-gradient-to-br from-[#000428] to-[#004e92] rounded-xl p-4 flex items-center justify-between"
+              >
                 <div>
                   <p className="text-white/70 text-xs">{pickup} → {drop}</p>
-                  <p className="text-white/40 text-[11px] mt-0.5">Estimated fare</p>
+                  <p className="text-white/40 text-[11px] mt-0.5">
+                    {distanceKm ? `~${distanceKm} km · Estimated fare` : "Estimated fare"}
+                  </p>
                 </div>
                 <div className="text-white text-2xl font-mono font-bold">
                   ₹{fare}
                 </div>
-              </div>
+              </motion.div>
 
               <div className="space-y-3">
                 <div className="flex items-center gap-3 bg-[#F5F7FA] rounded-xl border border-[#000428]/10 px-4 py-3 focus-within:border-[#004e92] transition-colors">
@@ -200,14 +268,17 @@ function BookingCard() {
 
               {error && <p className="text-sm text-red-600">{error}</p>}
 
-              <button
+              <motion.button
                 type="submit"
                 disabled={loading}
-                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#004e92] to-[#000428] text-white font-bold text-sm py-3.5 rounded-xl transition-all hover:shadow-[0_10px_30px_rgba(0,78,146,0.45)] hover:-translate-y-0.5 disabled:opacity-60"
+                whileHover={{ y: -2, boxShadow: "0 14px 34px rgba(0,78,146,0.5)" }}
+                whileTap={{ scale: 0.97 }}
+                transition={{ type: "spring", stiffness: 400, damping: 20 }}
+                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#004e92] to-[#000428] text-white font-bold text-sm py-3.5 rounded-xl disabled:opacity-60"
               >
                 {loading ? <Loader2 size={18} className="animate-spin" /> : null}
                 Book Taxi
-              </button>
+              </motion.button>
               <p className="text-[11px] text-[#000428]/50 text-center">
                 No call needed — your booking saves instantly and our team calls you.
               </p>
@@ -222,7 +293,13 @@ function BookingCard() {
               transition={{ duration: 0.3 }}
               className="text-center py-4 space-y-3"
             >
-              <CheckCircle2 size={44} className="text-[#004e92] mx-auto" />
+              <motion.div
+                initial={{ scale: 0, rotate: -20 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ type: "spring", stiffness: 260, damping: 14, delay: 0.1 }}
+              >
+                <CheckCircle2 size={44} className="text-[#004e92] mx-auto" />
+              </motion.div>
               <p className="font-bold text-[#000428] text-lg">Booking confirmed!</p>
               <p className="text-sm text-[#000428]/60">
                 We've got your ride from <b>{pickup}</b> to <b>{drop}</b>. Our
@@ -238,7 +315,7 @@ function BookingCard() {
           )}
         </AnimatePresence>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -255,25 +332,43 @@ export default function Home() {
             backgroundSize: "48px 48px",
           }}
         />
-        <div className="absolute -top-24 -right-24 w-[30rem] h-[30rem] bg-[#0072c6]/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#004e92]/30 rounded-full blur-3xl" />
+        <motion.div
+          variants={floatSlow}
+          animate="animate"
+          className="absolute -top-24 -right-24 w-[30rem] h-[30rem] bg-[#0072c6]/10 rounded-full blur-3xl"
+        />
+        <motion.div
+          variants={floatSlower}
+          animate="animate"
+          className="absolute bottom-0 left-0 w-96 h-96 bg-[#004e92]/30 rounded-full blur-3xl"
+        />
 
         <div className="relative max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-14 items-center">
-          <motion.div initial="hidden" animate="show" variants={fadeUp}>
-            <span className="inline-flex items-center gap-2 bg-white/5 border border-[#0072c6]/30 text-[#66c2ff] text-xs font-mono tracking-widest uppercase px-3 py-1.5 rounded-full mb-6">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#0072c6] animate-pulse" />
+          <motion.div initial="hidden" animate="show" variants={heroContainer}>
+            <motion.span
+              variants={heroItem}
+              className="inline-flex items-center gap-2 bg-white/5 border border-[#0072c6]/30 text-[#66c2ff] text-xs font-mono tracking-widest uppercase px-3 py-1.5 rounded-full mb-6"
+            >
+              <motion.span
+                animate={{ opacity: [1, 0.3, 1] }}
+                transition={{ duration: 1.8, repeat: Infinity }}
+                className="w-1.5 h-1.5 rounded-full bg-[#0072c6]"
+              />
               Now booking across your city
-            </span>
-            <h1 className="font-bold text-4xl sm:text-5xl lg:text-6xl text-white leading-[1.05] tracking-tight">
+            </motion.span>
+            <motion.h1
+              variants={heroItem}
+              className="font-bold text-4xl sm:text-5xl lg:text-6xl text-white leading-[1.05] tracking-tight"
+            >
               Your ride is a
               <span className="bg-gradient-to-r from-[#0072c6] to-[#66c2ff] bg-clip-text text-transparent"> tap</span> away.
-            </h1>
-            <p className="mt-6 text-white/60 text-lg max-w-md">
+            </motion.h1>
+            <motion.p variants={heroItem} className="mt-6 text-white/60 text-lg max-w-md">
               Enter your pickup and drop, see your fare instantly, and book —
               no calling, no waiting on hold.
-            </p>
+            </motion.p>
 
-            <div className="mt-10 flex items-center gap-8">
+            <motion.div variants={heroItem} className="mt-10 flex items-center gap-8">
               <div>
                 <p className="text-2xl font-bold text-white">4.9<span className="text-[#66c2ff]">★</span></p>
                 <p className="text-white/40 text-xs mt-1">Rider rating</p>
@@ -288,7 +383,7 @@ export default function Home() {
                 <p className="text-2xl font-bold text-white">24/7</p>
                 <p className="text-white/40 text-xs mt-1">Always available</p>
               </div>
-            </div>
+            </motion.div>
           </motion.div>
 
           <motion.div
@@ -320,16 +415,20 @@ export default function Home() {
             </h2>
           </motion.div>
 
-          <div className="grid md:grid-cols-3 gap-8">
-            {steps.map((s, i) => (
+          <motion.div
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, amount: 0.3 }}
+            variants={staggerGrid}
+            className="grid md:grid-cols-3 gap-8"
+          >
+            {steps.map((s) => (
               <motion.div
                 key={s.title}
-                initial="hidden"
-                whileInView="show"
-                viewport={{ once: true, amount: 0.4 }}
                 variants={fadeUp}
-                transition={{ delay: i * 0.12 }}
-                className="bg-white rounded-2xl p-7 border border-[#000428]/5 hover:border-[#0072c6]/50 hover:shadow-[0_20px_40px_rgba(0,4,40,0.08)] transition-all"
+                whileHover={{ y: -8, scale: 1.02 }}
+                transition={{ type: "spring", stiffness: 260, damping: 20 }}
+                className="bg-white rounded-2xl p-7 border border-[#000428]/5 hover:border-[#0072c6]/50 hover:shadow-[0_20px_40px_rgba(0,4,40,0.08)] transition-shadow"
               >
                 <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#004e92] to-[#000428] flex items-center justify-center mb-5">
                   <s.icon size={20} className="text-white" />
@@ -340,13 +439,18 @@ export default function Home() {
                 <p className="text-[#000428]/55 text-sm leading-relaxed">{s.text}</p>
               </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </section>
 
       {/* TRUST STRIP */}
-      <section className="bg-gradient-to-br from-[#000428] to-[#001845] py-20">
-        <div className="max-w-7xl mx-auto px-6">
+      <section className="relative bg-gradient-to-br from-[#000428] to-[#001845] py-20 overflow-hidden">
+        <motion.div
+          variants={floatSlow}
+          animate="animate"
+          className="absolute -bottom-32 right-0 w-72 h-72 bg-[#0072c6]/10 rounded-full blur-3xl"
+        />
+        <div className="relative max-w-7xl mx-auto px-6">
           <motion.div
             initial="hidden"
             whileInView="show"
@@ -360,15 +464,19 @@ export default function Home() {
             </p>
           </motion.div>
 
-          <div className="grid sm:grid-cols-3 gap-8">
-            {trust.map((t, i) => (
+          <motion.div
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, amount: 0.3 }}
+            variants={staggerGrid}
+            className="grid sm:grid-cols-3 gap-8"
+          >
+            {trust.map((t) => (
               <motion.div
                 key={t.title}
-                initial="hidden"
-                whileInView="show"
-                viewport={{ once: true, amount: 0.4 }}
                 variants={fadeUp}
-                transition={{ delay: i * 0.12 }}
+                whileHover={{ x: 4 }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
                 className="flex gap-4"
               >
                 <t.icon size={22} className="text-[#0072c6] shrink-0 mt-1" />
@@ -382,13 +490,19 @@ export default function Home() {
                 </div>
               </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </section>
 
       {/* CTA */}
-      <section className="bg-gradient-to-r from-[#004e92] to-[#0072c6] py-16">
-        <div className="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-6">
+      <section className="relative bg-gradient-to-r from-[#004e92] to-[#0072c6] py-16 overflow-hidden">
+        <motion.div
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, amount: 0.4 }}
+          variants={fadeUp}
+          className="relative max-w-7xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-6"
+        >
           <div>
             <h3 className="font-bold text-2xl sm:text-3xl text-white">
               Ready when you are.
@@ -397,17 +511,20 @@ export default function Home() {
               Book your first ride in under a minute.
             </p>
           </div>
-          <a
+          <motion.a
             href="#top"
             onClick={(e) => {
               e.preventDefault();
               window.scrollTo({ top: 0, behavior: "smooth" });
             }}
-            className="bg-[#000428] text-white font-bold text-sm px-7 py-3.5 rounded-full hover:shadow-[0_10px_30px_rgba(0,4,40,0.4)] hover:-translate-y-0.5 transition-all shrink-0"
+            whileHover={{ y: -3, boxShadow: "0 14px 34px rgba(0,4,40,0.45)" }}
+            whileTap={{ scale: 0.96 }}
+            transition={{ type: "spring", stiffness: 400, damping: 20 }}
+            className="bg-[#000428] text-white font-bold text-sm px-7 py-3.5 rounded-full shrink-0"
           >
             Book a taxi now
-          </a>
-        </div>
+          </motion.a>
+        </motion.div>
       </section>
     </div>
   );

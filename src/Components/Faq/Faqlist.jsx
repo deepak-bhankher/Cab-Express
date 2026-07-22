@@ -1,10 +1,15 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
   show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } },
+};
+
+const staggerList = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.08 } },
 };
 
 const faqs = [
@@ -33,10 +38,9 @@ const faqs = [
 function FaqItem({ item, isOpen, onClick }) {
   return (
     <motion.div
-      initial="hidden"
-      whileInView="show"
-      viewport={{ once: true, amount: 0.4 }}
       variants={fadeUp}
+      whileHover={{ y: -2 }}
+      transition={{ type: "spring", stiffness: 300, damping: 24 }}
       className="bg-white rounded-2xl border border-[#000428]/5 overflow-hidden"
     >
       <button
@@ -44,24 +48,28 @@ function FaqItem({ item, isOpen, onClick }) {
         className="w-full flex items-center justify-between gap-4 px-6 py-5 text-left"
       >
         <span className="font-bold text-[#000428]">{item.q}</span>
-        <ChevronDown
-          size={20}
-          className={`text-[#004e92] shrink-0 transition-transform duration-300 ${
-            isOpen ? "rotate-180" : ""
-          }`}
-        />
+        <motion.span
+          animate={{ rotate: isOpen ? 180 : 0 }}
+          transition={{ duration: 0.3, ease: "easeInOut" }}
+        >
+          <ChevronDown size={20} className="text-[#004e92] shrink-0" />
+        </motion.span>
       </button>
-      <div
-        className={`grid transition-all duration-300 ease-in-out ${
-          isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
-        }`}
-      >
-        <div className="overflow-hidden">
-          <p className="px-6 pb-5 text-[#000428]/60 text-sm leading-relaxed">
-            {item.a}
-          </p>
-        </div>
-      </div>
+      <AnimatePresence initial={false}>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+            className="overflow-hidden"
+          >
+            <p className="px-6 pb-5 text-[#000428]/60 text-sm leading-relaxed">
+              {item.a}
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }
@@ -71,7 +79,13 @@ export default function FaqList() {
 
   return (
     <section className="bg-[#F5F7FA] py-20">
-      <div className="max-w-3xl mx-auto px-6 space-y-4">
+      <motion.div
+        initial="hidden"
+        whileInView="show"
+        viewport={{ once: true, amount: 0.2 }}
+        variants={staggerList}
+        className="max-w-3xl mx-auto px-6 space-y-4"
+      >
         {faqs.map((item, i) => (
           <FaqItem
             key={item.q}
@@ -80,7 +94,7 @@ export default function FaqList() {
             onClick={() => setOpenIndex(openIndex === i ? -1 : i)}
           />
         ))}
-      </div>
+      </motion.div>
     </section>
   );
 }
