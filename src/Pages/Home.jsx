@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { createBooking } from "../lib/api";
 import { calculateFare } from "../lib/fareCalculator";
-import CityInput from "../components/Cityinput";
+import CityInput from "../Components/Cityinput";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
