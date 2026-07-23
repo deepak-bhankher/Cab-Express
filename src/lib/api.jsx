@@ -1,5 +1,5 @@
-// Backend base URL — jab deploy kare tab isko badal dena
-export const API_BASE = "http://localhost:5000/api";
+// Live backend on Render — was localhost:5000 during local development
+export const API_BASE = "https://mycab-backend.onrender.com/api";
 
 export async function getFare(pickupCity, dropCity) {
   const res = await fetch(
