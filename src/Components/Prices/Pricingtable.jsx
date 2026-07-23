@@ -43,11 +43,15 @@ export default function PricingTable() {
           variants={fadeUp}
           className="bg-white rounded-2xl border border-[#000428]/5 overflow-hidden shadow-[0_20px_50px_rgba(0,4,40,0.06)]"
         >
-          <div className="grid grid-cols-[1fr_auto_1fr] sm:grid-cols-[1fr_1fr_auto_auto] bg-gradient-to-r from-[#000428] to-[#004e92] text-white text-xs font-mono uppercase tracking-wide px-6 py-4">
+          {/* Header — hidden on mobile, table-style only makes sense on wider screens */}
+          <div className="hidden sm:grid grid-cols-[1fr_1fr_auto_auto] bg-gradient-to-r from-[#000428] to-[#004e92] text-white text-xs font-mono uppercase tracking-wide px-6 py-4">
             <span>Pickup</span>
-            <span className="hidden sm:block">Drop</span>
-            <span className="text-right sm:text-left">Distance</span>
+            <span>Drop</span>
+            <span className="text-left">Distance</span>
             <span className="text-right">Fare</span>
+          </div>
+          <div className="sm:hidden bg-gradient-to-r from-[#000428] to-[#004e92] text-white text-xs font-mono uppercase tracking-wide px-6 py-4">
+            Sample Routes
           </div>
 
           <motion.div
@@ -61,18 +65,36 @@ export default function PricingTable() {
                 key={`${r.from}-${r.to}`}
                 variants={rowVariant}
                 whileHover={{ backgroundColor: "#F5F7FA" }}
-                className="grid grid-cols-[1fr_auto_1fr] sm:grid-cols-[1fr_1fr_auto_auto] items-center px-6 py-4 border-t border-[#000428]/5"
+                className="px-6 py-4 border-t border-[#000428]/5"
               >
-                <span className="text-[#000428] font-medium text-sm">{r.from}</span>
-                <span className="hidden sm:flex items-center gap-1 text-[#000428]/50 text-sm">
-                  <ArrowRight size={14} /> {r.to}
-                </span>
-                <span className="text-[#000428]/50 text-xs text-right sm:text-left">
-                  ~{r.distanceKm} km
-                </span>
-                <span className="font-mono font-bold text-[#004e92] text-right">
-                  ₹{r.price}
-                </span>
+                {/* Mobile layout: route on top, distance + fare below */}
+                <div className="flex sm:hidden flex-col gap-1.5">
+                  <div className="flex items-center gap-2 text-[#000428] font-medium text-sm">
+                    <span>{r.from}</span>
+                    <ArrowRight size={14} className="text-[#000428]/40" />
+                    <span>{r.to}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[#000428]/50 text-xs">~{r.distanceKm} km</span>
+                    <span className="font-mono font-bold text-[#004e92] text-base">
+                      ₹{r.price}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Desktop/tablet layout: full grid row */}
+                <div className="hidden sm:grid grid-cols-[1fr_1fr_auto_auto] items-center">
+                  <span className="text-[#000428] font-medium text-sm">{r.from}</span>
+                  <span className="flex items-center gap-1 text-[#000428]/50 text-sm">
+                    <ArrowRight size={14} /> {r.to}
+                  </span>
+                  <span className="text-[#000428]/50 text-xs text-left">
+                    ~{r.distanceKm} km
+                  </span>
+                  <span className="font-mono font-bold text-[#004e92] text-right">
+                    ₹{r.price}
+                  </span>
+                </div>
               </motion.div>
             ))}
           </motion.div>
