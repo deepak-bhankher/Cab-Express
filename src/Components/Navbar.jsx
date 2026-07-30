@@ -129,7 +129,7 @@ export default function Navbar() {
                 </motion.div>
               ))}
               <a
-                href="tel:+911234567890"
+                href="tel:+91 96252 44217"
                 className="flex items-center justify-center gap-2 bg-white text-[#000428] font-bold text-sm px-4 py-3 rounded-full mt-2"
               >
                 <Phone size={16} /> Call Support
