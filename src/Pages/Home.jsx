@@ -20,6 +20,20 @@ import { createBooking } from "../lib/api";
 import { calculateFare } from "../lib/fareCalculator";
 import CityInput from "../Components/Cityinput";
 
+// ---------------------------------------------------------------------------
+// Fonts — Space Grotesk (display), Inter (body), IBM Plex Mono (data/eyebrows)
+// Move this <style> block into your global index.html/index.css in production
+// to avoid re-injecting it on every render.
+// ---------------------------------------------------------------------------
+const FontImport = () => (
+  <style>{`
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap');
+    .font-display { font-family: 'Space Grotesk', sans-serif; }
+    .font-body { font-family: 'Inter', sans-serif; }
+    .font-data { font-family: 'IBM Plex Mono', monospace; }
+  `}</style>
+);
+
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
   show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } },
@@ -80,7 +94,70 @@ const trust = [
   { icon: Clock, title: "On-time pickups", text: "Real people confirming your ride, not a black-box algorithm." },
 ];
 
-// ---- Booking card — connected to the real backend ----
+// ---------------------------------------------------------------------------
+// Signature element — an animated dashed route line with pickup/drop pins.
+// This motif reappears (thinner) as the divider between sections below.
+// ---------------------------------------------------------------------------
+function RouteSignature() {
+  return (
+    <svg
+      viewBox="0 0 640 420"
+      fill="none"
+      className="absolute inset-0 w-full h-full opacity-[0.35] pointer-events-none"
+      preserveAspectRatio="xMidYMid slice"
+    >
+      <motion.path
+        d="M 40 360 C 160 360, 180 220, 300 220 S 460 80, 600 60"
+        stroke="#66c2ff"
+        strokeWidth="2.5"
+        strokeDasharray="2 10"
+        strokeLinecap="round"
+        initial={{ strokeDashoffset: 0 }}
+        animate={{ strokeDashoffset: -120 }}
+        transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
+      />
+      <motion.circle
+        cx="40"
+        cy="360"
+        r="7"
+        fill="#0EA894"
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        transition={{ duration: 0.5, delay: 0.4 }}
+      />
+      <circle cx="40" cy="360" r="13" stroke="#0EA894" strokeWidth="1.5" opacity="0.4" />
+      <motion.circle
+        cx="600"
+        cy="60"
+        r="7"
+        fill="#FF6B4A"
+        initial={{ scale: 0 }}
+        animate={{ scale: [1, 1.25, 1] }}
+        transition={{ scale: { duration: 2.2, repeat: Infinity, ease: "easeInOut", delay: 1 } }}
+      />
+      <circle cx="600" cy="60" r="13" stroke="#FF6B4A" strokeWidth="1.5" opacity="0.4" />
+    </svg>
+  );
+}
+
+function RouteDivider({ tone = "light" }) {
+  const lineColor = tone === "light" ? "#000428" : "#ffffff";
+  return (
+    <div className="relative h-px w-full max-w-7xl mx-auto px-6">
+      <div
+        className="w-full h-px"
+        style={{
+          backgroundImage: `linear-gradient(90deg, transparent, ${lineColor}22 20%, ${lineColor}22 80%, transparent)`,
+        }}
+      />
+      <span
+        className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 top-1/2 w-1.5 h-1.5 rounded-full"
+        style={{ backgroundColor: tone === "light" ? "#004e92" : "#66c2ff" }}
+      />
+    </div>
+  );
+}
+
 const STEPS = { SEARCH: "search", FARE: "fare", DONE: "done" };
 
 function BookingCard() {
@@ -106,7 +183,6 @@ function BookingCard() {
       return;
     }
     setLoading(true);
-    // Calculated locally from city coordinates — works for any route
     const result = calculateFare(pickup.trim(), drop.trim());
     setTimeout(() => {
       if (!result) {
@@ -129,7 +205,6 @@ function BookingCard() {
     }
     setLoading(true);
     try {
-      // Calls POST /api/bookings on your backend — saves to MongoDB
       await createBooking({
         passengerName: name.trim(),
         phoneNumber: phone.trim(),
@@ -158,162 +233,172 @@ function BookingCard() {
 
   return (
     <motion.div
-      whileHover={{ y: -4 }}
+      whileHover={{ y: -6 }}
       transition={{ type: "spring", stiffness: 260, damping: 24 }}
-      className="relative w-full max-w-md bg-white/95 backdrop-blur-xl rounded-2xl shadow-[0_25px_70px_rgba(0,4,40,0.55)] border border-white/50 overflow-hidden"
+      className="relative w-full max-w-md rounded-[28px] p-[1.5px] bg-gradient-to-br from-[#0072c6]/60 via-white/10 to-[#66c2ff]/40 shadow-[0_35px_80px_rgba(0,4,40,0.55)]"
     >
-      <div className="h-1.5 bg-gradient-to-r from-[#004e92] via-[#0072c6] to-[#001845]" />
-      <div className="p-6 sm:p-7">
-        <AnimatePresence mode="wait">
-          {step === STEPS.SEARCH && (
-            <motion.form
-              key="search"
-              onSubmit={handleSearch}
-              initial={{ opacity: 0, x: 12 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -12 }}
-              transition={{ duration: 0.25 }}
-              className="space-y-4"
-            >
-              <p className="font-bold text-[#000428] text-lg">Where are you headed?</p>
-
-              <div className="space-y-3">
-                <CityInput
-                  value={pickup}
-                  onChange={setPickup}
-                  placeholder="Pickup location"
-                  icon={MapPin}
-                  iconClassName="text-[#004e92]"
-                />
-                <CityInput
-                  value={drop}
-                  onChange={setDrop}
-                  placeholder="Drop location"
-                  icon={Navigation}
-                  iconClassName="text-[#0072c6]"
-                />
-              </div>
-
-              {error && <p className="text-sm text-red-600">{error}</p>}
-
-              <motion.button
-                type="submit"
-                disabled={loading}
-                whileHover={{ y: -2, boxShadow: "0 14px 34px rgba(0,78,146,0.5)" }}
-                whileTap={{ scale: 0.97 }}
-                transition={{ type: "spring", stiffness: 400, damping: 20 }}
-                className="w-full flex items-center cursor-pointer justify-center gap-2 bg-gradient-to-r from-[#004e92] to-[#000428] text-white font-bold text-sm py-3.5 rounded-xl disabled:opacity-60"
-              >
-                {loading ? <Loader2 size={18} className="animate-spin" /> : <Search size={18} />}
-                Search Taxi
-              </motion.button>
-            </motion.form>
-          )}
-
-          {step === STEPS.FARE && (
-            <motion.form
-              key="fare"
-              onSubmit={handleBook}
-              initial={{ opacity: 0, x: 12 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -12 }}
-              transition={{ duration: 0.25 }}
-              className="space-y-4"
-            >
-              <button
-                type="button"
-                onClick={() => setStep(STEPS.SEARCH)}
-                className="flex items-center gap-1 text-xs text-[#000428]/60 hover:text-[#000428] transition-colors"
-              >
-                <ArrowLeft size={14} /> Change route
-              </button>
-
-              <motion.div
-                initial={{ opacity: 0, scale: 0.96 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.35, ease: "easeOut" }}
-                className="bg-gradient-to-br from-[#000428] to-[#004e92] rounded-xl p-4 flex items-center justify-between"
+      <div className="rounded-[26px] bg-white/97 backdrop-blur-xl overflow-hidden">
+        <div className="h-1.5 bg-gradient-to-r from-[#004e92] via-[#0072c6] to-[#001845]" />
+        <div className="p-6 sm:p-7">
+          <AnimatePresence mode="wait">
+            {step === STEPS.SEARCH && (
+              <motion.form
+                key="search"
+                onSubmit={handleSearch}
+                initial={{ opacity: 0, x: 12 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -12 }}
+                transition={{ duration: 0.25 }}
+                className="space-y-4"
               >
                 <div>
-                  <p className="text-white/70 text-xs">{pickup} → {drop}</p>
-                  <p className="text-white/40 text-[11px] mt-0.5">
-                    {distanceKm ? `~${distanceKm} km · Estimated fare` : "Estimated fare"}
+                  <p className="font-display font-semibold text-[#000428] text-lg">
+                    Where are you headed?
+                  </p>
+                  <p className="font-body text-xs text-[#000428]/45 mt-1">
+                    Fares are calculated instantly — no waiting for a quote.
                   </p>
                 </div>
-                <div className="text-white text-2xl font-mono font-bold">
-                  ₹{fare}
-                </div>
-              </motion.div>
 
-              <div className="space-y-3">
-                <div className="flex items-center gap-3 bg-[#F5F7FA] rounded-xl border border-[#000428]/10 px-4 py-3 focus-within:border-[#004e92] transition-colors">
-                  <input
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Your name"
-                    className="w-full bg-transparent outline-none text-sm text-[#000428] placeholder:text-[#000428]/40"
+                <div className="space-y-3">
+                  <CityInput
+                    value={pickup}
+                    onChange={setPickup}
+                    placeholder="Pickup location"
+                    icon={MapPin}
+                    iconClassName="text-[#0EA894]"
+                  />
+                  <CityInput
+                    value={drop}
+                    onChange={setDrop}
+                    placeholder="Drop location"
+                    icon={Navigation}
+                    iconClassName="text-[#FF6B4A]"
                   />
                 </div>
-                <div className="flex items-center gap-3 bg-[#F5F7FA] rounded-xl border border-[#000428]/10 px-4 py-3 focus-within:border-[#004e92] transition-colors">
-                  <Phone size={18} className="text-[#004e92] shrink-0" />
-                  <input
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
-                    placeholder="10-digit phone number"
-                    inputMode="numeric"
-                    className="w-full bg-transparent outline-none text-sm text-[#000428] placeholder:text-[#000428]/40"
-                  />
-                </div>
-              </div>
 
-              {error && <p className="text-sm text-red-600">{error}</p>}
+                {error && <p className="font-body text-sm text-red-600">{error}</p>}
 
-              <motion.button
-                type="submit"
-                disabled={loading}
-                whileHover={{ y: -2, boxShadow: "0 14px 34px rgba(0,78,146,0.5)" }}
-                whileTap={{ scale: 0.97 }}
-                transition={{ type: "spring", stiffness: 400, damping: 20 }}
-                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#004e92] to-[#000428] text-white font-bold text-sm py-3.5 rounded-xl disabled:opacity-60"
+                <motion.button
+                  type="submit"
+                  disabled={loading}
+                  whileHover={{ y: -2, boxShadow: "0 14px 34px rgba(0,78,146,0.5)" }}
+                  whileTap={{ scale: 0.97 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 20 }}
+                  className="w-full flex items-center cursor-pointer justify-center gap-2 bg-gradient-to-r from-[#004e92] to-[#000428] text-white font-body font-bold text-sm py-3.5 rounded-xl disabled:opacity-60"
+                >
+                  {loading ? <Loader2 size={18} className="animate-spin" /> : <Search size={18} />}
+                  Search Taxi
+                </motion.button>
+              </motion.form>
+            )}
+
+            {step === STEPS.FARE && (
+              <motion.form
+                key="fare"
+                onSubmit={handleBook}
+                initial={{ opacity: 0, x: 12 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -12 }}
+                transition={{ duration: 0.25 }}
+                className="space-y-4"
               >
-                {loading ? <Loader2 size={18} className="animate-spin" /> : null}
-                Book Taxi
-              </motion.button>
-              <p className="text-[11px] text-[#000428]/50 text-center">
-                No call needed — your booking saves instantly and our team calls you.
-              </p>
-            </motion.form>
-          )}
+                <button
+                  type="button"
+                  onClick={() => setStep(STEPS.SEARCH)}
+                  className="flex items-center gap-1 font-body text-xs text-[#000428]/60 hover:text-[#000428] transition-colors"
+                >
+                  <ArrowLeft size={14} /> Change route
+                </button>
 
-          {step === STEPS.DONE && (
-            <motion.div
-              key="done"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.3 }}
-              className="text-center py-4 space-y-3"
-            >
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.96 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.35, ease: "easeOut" }}
+                  className="relative overflow-hidden bg-gradient-to-br from-[#000428] to-[#004e92] rounded-xl p-4 flex items-center justify-between"
+                >
+                  <div className="absolute -right-6 -top-6 w-20 h-20 bg-[#66c2ff]/20 rounded-full blur-2xl" />
+                  <div className="relative">
+                    <p className="font-body text-white/70 text-xs">{pickup} → {drop}</p>
+                    <p className="font-data text-white/40 text-[11px] mt-1 tracking-wide">
+                      {distanceKm ? `~${distanceKm} KM · ESTIMATED` : "ESTIMATED FARE"}
+                    </p>
+                  </div>
+                  <div className="relative font-data text-white text-2xl font-semibold">
+                    ₹{fare}
+                  </div>
+                </motion.div>
+
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 bg-[#F5F7FA] rounded-xl border border-[#000428]/10 px-4 py-3 focus-within:border-[#004e92] transition-colors">
+                    <input
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="Your name"
+                      className="w-full bg-transparent outline-none font-body text-sm text-[#000428] placeholder:text-[#000428]/40"
+                    />
+                  </div>
+                  <div className="flex items-center gap-3 bg-[#F5F7FA] rounded-xl border border-[#000428]/10 px-4 py-3 focus-within:border-[#004e92] transition-colors">
+                    <Phone size={18} className="text-[#004e92] shrink-0" />
+                    <input
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                      placeholder="10-digit phone number"
+                      inputMode="numeric"
+                      className="w-full bg-transparent outline-none font-body text-sm text-[#000428] placeholder:text-[#000428]/40"
+                    />
+                  </div>
+                </div>
+
+                {error && <p className="font-body text-sm text-red-600">{error}</p>}
+
+                <motion.button
+                  type="submit"
+                  disabled={loading}
+                  whileHover={{ y: -2, boxShadow: "0 14px 34px rgba(0,78,146,0.5)" }}
+                  whileTap={{ scale: 0.97 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 20 }}
+                  className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#004e92] to-[#000428] text-white font-body font-bold text-sm py-3.5 rounded-xl disabled:opacity-60"
+                >
+                  {loading ? <Loader2 size={18} className="animate-spin" /> : null}
+                  Book Taxi
+                </motion.button>
+                <p className="font-body text-[11px] text-[#000428]/50 text-center">
+                  No call needed — your booking saves instantly and our team calls you.
+                </p>
+              </motion.form>
+            )}
+
+            {step === STEPS.DONE && (
               <motion.div
-                initial={{ scale: 0, rotate: -20 }}
-                animate={{ scale: 1, rotate: 0 }}
-                transition={{ type: "spring", stiffness: 260, damping: 14, delay: 0.1 }}
+                key="done"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.3 }}
+                className="text-center py-4 space-y-3"
               >
-                <CheckCircle2 size={44} className="text-[#004e92] mx-auto" />
+                <motion.div
+                  initial={{ scale: 0, rotate: -20 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ type: "spring", stiffness: 260, damping: 14, delay: 0.1 }}
+                >
+                  <CheckCircle2 size={44} className="text-[#004e92] mx-auto" />
+                </motion.div>
+                <p className="font-display font-semibold text-[#000428] text-lg">Booking confirmed!</p>
+                <p className="font-body text-sm text-[#000428]/60">
+                  We've got your ride from <b>{pickup}</b> to <b>{drop}</b>. Our
+                  team will call {phone} shortly to confirm your driver.
+                </p>
+                <button
+                  onClick={reset}
+                  className="mt-2 font-body text-sm font-bold text-[#004e92] underline underline-offset-4 hover:text-[#000428]"
+                >
+                  Book another ride
+                </button>
               </motion.div>
-              <p className="font-bold text-[#000428] text-lg">Booking confirmed!</p>
-              <p className="text-sm text-[#000428]/60">
-                We've got your ride from <b>{pickup}</b> to <b>{drop}</b>. Our
-                team will call {phone} shortly to confirm your driver.
-              </p>
-              <button
-                onClick={reset}
-                className="mt-2 text-sm font-bold text-[#004e92] underline underline-offset-4 hover:text-[#000428]"
-              >
-                Book another ride
-              </button>
-            </motion.div>
-          )}
-        </AnimatePresence>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
     </motion.div>
   );
@@ -321,7 +406,9 @@ function BookingCard() {
 
 export default function Home() {
   return (
-    <div>
+    <div className="font-body">
+      <FontImport />
+
       {/* HERO */}
       <section className="relative bg-gradient-to-br from-[#000428] via-[#001845] to-[#004e92] overflow-hidden pt-32 pb-24 md:pt-40 md:pb-32">
         <div
@@ -332,6 +419,7 @@ export default function Home() {
             backgroundSize: "48px 48px",
           }}
         />
+        <RouteSignature />
         <motion.div
           variants={floatSlow}
           animate="animate"
@@ -347,7 +435,7 @@ export default function Home() {
           <motion.div initial="hidden" animate="show" variants={heroContainer}>
             <motion.span
               variants={heroItem}
-              className="inline-flex items-center gap-2 bg-white/5 border border-[#0072c6]/30 text-[#66c2ff] text-xs font-mono tracking-widest uppercase px-3 py-1.5 rounded-full mb-6"
+              className="inline-flex items-center gap-2 bg-white/5 border border-[#0072c6]/30 text-[#66c2ff] font-data text-xs tracking-widest uppercase px-3 py-1.5 rounded-full mb-6"
             >
               <motion.span
                 animate={{ opacity: [1, 0.3, 1] }}
@@ -358,7 +446,7 @@ export default function Home() {
             </motion.span>
             <motion.h1
               variants={heroItem}
-              className="font-bold text-4xl sm:text-5xl lg:text-6xl text-white leading-[1.05] tracking-tight"
+              className="font-display font-bold text-4xl sm:text-5xl lg:text-6xl text-white leading-[1.05] tracking-tight"
             >
               Your ride is a
               <span className="bg-gradient-to-r from-[#0072c6] to-[#66c2ff] bg-clip-text text-transparent"> tap</span> away.
@@ -370,17 +458,17 @@ export default function Home() {
 
             <motion.div variants={heroItem} className="mt-10 flex items-center gap-8">
               <div>
-                <p className="text-2xl font-bold text-white">4.9<span className="text-[#66c2ff]">★</span></p>
+                <p className="font-data text-2xl font-semibold text-white">4.9<span className="text-[#66c2ff]">★</span></p>
                 <p className="text-white/40 text-xs mt-1">Rider rating</p>
               </div>
               <div className="w-px h-10 bg-white/10" />
               <div>
-                <p className="text-2xl font-bold text-white">12k+</p>
+                <p className="font-data text-2xl font-semibold text-white">12k+</p>
                 <p className="text-white/40 text-xs mt-1">Rides completed</p>
               </div>
               <div className="w-px h-10 bg-white/10" />
               <div>
-                <p className="text-2xl font-bold text-white">24/7</p>
+                <p className="font-data text-2xl font-semibold text-white">24/7</p>
                 <p className="text-white/40 text-xs mt-1">Always available</p>
               </div>
             </motion.div>
@@ -398,7 +486,10 @@ export default function Home() {
       </section>
 
       {/* HOW IT WORKS */}
-      <section className="bg-[#F5F7FA] py-24">
+      <section className="relative bg-[#F5F7FA] py-24">
+        <div className="absolute -top-px left-0 right-0">
+          <RouteDivider tone="light" />
+        </div>
         <div className="max-w-7xl mx-auto px-6">
           <motion.div
             initial="hidden"
@@ -407,10 +498,10 @@ export default function Home() {
             variants={fadeUp}
             className="max-w-xl mb-16"
           >
-            <span className="text-[#004e92] font-mono text-xs tracking-widest uppercase font-semibold">
+            <span className="font-data text-[#004e92] text-xs tracking-widest uppercase font-semibold">
               How booking works
             </span>
-            <h2 className="font-bold text-3xl sm:text-4xl text-[#000428] mt-3">
+            <h2 className="font-display font-bold text-3xl sm:text-4xl text-[#000428] mt-3">
               Three steps. No phone call required.
             </h2>
           </motion.div>
@@ -422,18 +513,21 @@ export default function Home() {
             variants={staggerGrid}
             className="grid md:grid-cols-3 gap-8"
           >
-            {steps.map((s) => (
+            {steps.map((s, i) => (
               <motion.div
                 key={s.title}
                 variants={fadeUp}
                 whileHover={{ y: -8, scale: 1.02 }}
                 transition={{ type: "spring", stiffness: 260, damping: 20 }}
-                className="bg-white rounded-2xl p-7 border border-[#000428]/5 hover:border-[#0072c6]/50 hover:shadow-[0_20px_40px_rgba(0,4,40,0.08)] transition-shadow"
+                className="relative bg-white rounded-2xl p-7 border border-[#000428]/5 hover:border-[#0072c6]/50 hover:shadow-[0_20px_40px_rgba(0,4,40,0.08)] transition-shadow"
               >
+                <span className="absolute top-6 right-7 font-data text-[#000428]/10 text-3xl font-semibold select-none">
+                  0{i + 1}
+                </span>
                 <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#004e92] to-[#000428] flex items-center justify-center mb-5">
                   <s.icon size={20} className="text-white" />
                 </div>
-                <h3 className="font-bold text-lg text-[#000428] mb-2">
+                <h3 className="font-display font-semibold text-lg text-[#000428] mb-2">
                   {s.title}
                 </h3>
                 <p className="text-[#000428]/55 text-sm leading-relaxed">{s.text}</p>
@@ -445,6 +539,9 @@ export default function Home() {
 
       {/* TRUST STRIP */}
       <section className="relative bg-gradient-to-br from-[#000428] to-[#001845] py-20 overflow-hidden">
+        <div className="absolute -top-px left-0 right-0">
+          <RouteDivider tone="dark" />
+        </div>
         <motion.div
           variants={floatSlow}
           animate="animate"
@@ -481,7 +578,7 @@ export default function Home() {
               >
                 <t.icon size={22} className="text-[#0072c6] shrink-0 mt-1" />
                 <div>
-                  <h4 className="font-bold text-white text-base mb-1">
+                  <h4 className="font-display font-semibold text-white text-base mb-1">
                     {t.title}
                   </h4>
                   <p className="text-white/50 text-sm leading-relaxed">
@@ -504,7 +601,7 @@ export default function Home() {
           className="relative max-w-7xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-6"
         >
           <div>
-            <h3 className="font-bold text-2xl sm:text-3xl text-white">
+            <h3 className="font-display font-bold text-2xl sm:text-3xl text-white">
               Ready when you are.
             </h3>
             <p className="text-white/70 mt-1">
@@ -520,7 +617,7 @@ export default function Home() {
             whileHover={{ y: -3, boxShadow: "0 14px 34px rgba(0,4,40,0.45)" }}
             whileTap={{ scale: 0.96 }}
             transition={{ type: "spring", stiffness: 400, damping: 20 }}
-            className="bg-[#000428] text-white font-bold text-sm px-7 py-3.5 rounded-full shrink-0"
+            className="bg-[#000428] text-white font-body font-bold text-sm px-7 py-3.5 rounded-full shrink-0"
           >
             Book a taxi now
           </motion.a>
