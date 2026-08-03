@@ -15,16 +15,12 @@ import {
   CheckCircle2,
   Loader2,
   ArrowLeft,
+  Car,
 } from "lucide-react";
 import { createBooking } from "../lib/api";
-import { calculateFare } from "../lib/fareCalculator";
+import { calculateFare, getFixedFare } from "../lib/fareCalculator";
 import CityInput from "../Components/Cityinput";
 
-// ---------------------------------------------------------------------------
-// Fonts — Space Grotesk (display), Inter (body), IBM Plex Mono (data/eyebrows)
-// Move this <style> block into your global index.html/index.css in production
-// to avoid re-injecting it on every render.
-// ---------------------------------------------------------------------------
 const FontImport = () => (
   <style>{`
     @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap');
@@ -94,10 +90,6 @@ const trust = [
   { icon: Clock, title: "On-time pickups", text: "Real people confirming your ride, not a black-box algorithm." },
 ];
 
-// ---------------------------------------------------------------------------
-// Signature element — an animated dashed route line with pickup/drop pins.
-// This motif reappears (thinner) as the divider between sections below.
-// ---------------------------------------------------------------------------
 function RouteSignature() {
   return (
     <svg
@@ -166,10 +158,14 @@ function BookingCard() {
   const [drop, setDrop] = useState("");
   const [phone, setPhone] = useState("");
   const [name, setName] = useState("");
-  const [fare, setFare] = useState(null);
+  const [baseFares, setBaseFares] = useState(null);
+  const [carType, setCarType] = useState("small");
   const [distanceKm, setDistanceKm] = useState(null);
+  const [isFixedRoute, setIsFixedRoute] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const baseFare = baseFares ? baseFares[carType] : 0;
 
   async function handleSearch(e) {
     e.preventDefault();
@@ -183,15 +179,30 @@ function BookingCard() {
       return;
     }
     setLoading(true);
-    const result = calculateFare(pickup.trim(), drop.trim());
+
     setTimeout(() => {
+      const fixed = getFixedFare(pickup.trim(), drop.trim());
+      if (fixed) {
+        setBaseFares(fixed);
+        setDistanceKm(null);
+        setIsFixedRoute(true);
+        setCarType("small");
+        setStep(STEPS.FARE);
+        setLoading(false);
+        return;
+      }
+
+      const result = calculateFare(pickup.trim(), drop.trim());
       if (!result) {
         setError("We don't service one of these cities yet.");
-      } else {
-        setFare(result.fare);
-        setDistanceKm(result.distanceKm);
-        setStep(STEPS.FARE);
+        setLoading(false);
+        return;
       }
+      setBaseFares({ small: result.fare, large: Math.round(result.fare * 1.2) });
+      setDistanceKm(result.distanceKm);
+      setIsFixedRoute(false);
+      setCarType("small");
+      setStep(STEPS.FARE);
       setLoading(false);
     }, 350);
   }
@@ -210,7 +221,8 @@ function BookingCard() {
         phoneNumber: phone.trim(),
         pickupLocation: pickup.trim(),
         dropLocation: drop.trim(),
-        fare,
+        carType,
+        fare: baseFare,
       });
       setStep(STEPS.DONE);
     } catch (err) {
@@ -226,8 +238,10 @@ function BookingCard() {
     setDrop("");
     setPhone("");
     setName("");
-    setFare(null);
+    setBaseFares(null);
+    setCarType("small");
     setDistanceKm(null);
+    setIsFixedRoute(false);
     setError("");
   }
 
@@ -315,19 +329,53 @@ function BookingCard() {
                   initial={{ opacity: 0, scale: 0.96 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.35, ease: "easeOut" }}
-                  className="relative overflow-hidden bg-gradient-to-br from-[#000428] to-[#004e92] rounded-xl p-4 flex items-center justify-between"
+                  className="relative overflow-hidden bg-gradient-to-br from-[#000428] to-[#004e92] rounded-xl p-4"
                 >
                   <div className="absolute -right-6 -top-6 w-20 h-20 bg-[#66c2ff]/20 rounded-full blur-2xl" />
-                  <div className="relative">
-                    <p className="font-body text-white/70 text-xs">{pickup} → {drop}</p>
-                    <p className="font-data text-white/40 text-[11px] mt-1 tracking-wide">
-                      {distanceKm ? `~${distanceKm} KM · ESTIMATED` : "ESTIMATED FARE"}
-                    </p>
-                  </div>
-                  <div className="relative font-data text-white text-2xl font-semibold">
-                    ₹{fare}
+                  <div className="relative flex items-center justify-between">
+                    <div>
+                      <p className="font-body text-white/70 text-xs">{pickup} → {drop}</p>
+                      <p className="font-data text-white/40 text-[11px] mt-1 tracking-wide">
+                        {isFixedRoute ? "FIXED OUTSTATION FARE" : distanceKm ? `~${distanceKm} KM · ESTIMATED` : "ESTIMATED FARE"}
+                      </p>
+                    </div>
+                    <div className="relative font-data text-white text-2xl font-semibold">
+                      ₹{baseFare}
+                    </div>
                   </div>
                 </motion.div>
+
+                <div>
+                  <p className="font-data text-[11px] text-[#000428]/45 uppercase tracking-wide mb-2">
+                    Choose your car
+                  </p>
+                  <div className="grid grid-cols-2 gap-3">
+                    {["small", "large"].map((type) => (
+                      <motion.button
+                        key={type}
+                        type="button"
+                        whileTap={{ scale: 0.97 }}
+                        onClick={() => setCarType(type)}
+                        className={`relative flex flex-col items-center gap-1.5 rounded-xl border-2 py-3 transition-colors ${
+                          carType === type
+                            ? "border-[#004e92] bg-[#004e92]/5"
+                            : "border-[#000428]/10 hover:border-[#000428]/20"
+                        }`}
+                      >
+                        <Car
+                          size={type === "large" ? 26 : 20}
+                          className={carType === type ? "text-[#004e92]" : "text-[#000428]/40"}
+                        />
+                        <span className={`font-body text-xs font-bold ${carType === type ? "text-[#000428]" : "text-[#000428]/50"}`}>
+                          {type === "small" ? "Small Car" : "Large Car"}
+                        </span>
+                        <span className="font-data text-[11px] text-[#000428]/50">
+                          ₹{baseFares ? baseFares[type] : 0}
+                        </span>
+                      </motion.button>
+                    ))}
+                  </div>
+                </div>
 
                 <div className="space-y-3">
                   <div className="flex items-center gap-3 bg-[#F5F7FA] rounded-xl border border-[#000428]/10 px-4 py-3 focus-within:border-[#004e92] transition-colors">
@@ -361,7 +409,7 @@ function BookingCard() {
                   className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#004e92] to-[#000428] text-white font-body font-bold text-sm py-3.5 rounded-xl disabled:opacity-60"
                 >
                   {loading ? <Loader2 size={18} className="animate-spin" /> : null}
-                  Book Taxi
+                  Book Taxi · ₹{baseFare}
                 </motion.button>
                 <p className="font-body text-[11px] text-[#000428]/50 text-center">
                   No call needed — your booking saves instantly and our team calls you.
@@ -409,7 +457,6 @@ export default function Home() {
     <div className="font-body">
       <FontImport />
 
-      {/* HERO */}
       <section className="relative bg-gradient-to-br from-[#000428] via-[#001845] to-[#004e92] overflow-hidden pt-32 pb-24 md:pt-40 md:pb-32">
         <div
           className="absolute inset-0 [mask-image:radial-gradient(ellipse_at_top,black,transparent_75%)]"
@@ -485,7 +532,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* HOW IT WORKS */}
       <section className="relative bg-[#F5F7FA] py-24">
         <div className="absolute -top-px left-0 right-0">
           <RouteDivider tone="light" />
@@ -537,7 +583,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* TRUST STRIP */}
       <section className="relative bg-gradient-to-br from-[#000428] to-[#001845] py-20 overflow-hidden">
         <div className="absolute -top-px left-0 right-0">
           <RouteDivider tone="dark" />
@@ -591,7 +636,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* CTA */}
       <section className="relative bg-gradient-to-r from-[#004e92] to-[#0072c6] py-16 overflow-hidden">
         <motion.div
           initial="hidden"

@@ -7,6 +7,7 @@ export const SERVICE_CITIES = [
   "Hisar",
   "Delhi",
   "Gurgaon",
+  "Gurugram",
   "Noida",
   "Faridabad",
   "Chandigarh",
@@ -19,6 +20,13 @@ export const SERVICE_CITIES = [
   "Fatehabad",
   "Ambala",
   "Jaipur",
+  "Delhi Airport",
+  "New Delhi",
+  "Nizamuddin",
+  "Hindon Airport",
+  "Jewar Airport",
+  "Khatu Shyam",
+  "Salasar",
 ];
 
 export default function CityInput({

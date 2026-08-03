@@ -5,6 +5,7 @@ export const CITY_COORDS = {
   Hisar: [29.1492, 75.7217],
   Delhi: [28.7041, 77.1025],
   Gurgaon: [28.4595, 77.0266],
+  Gurugram: [28.4595, 77.0266],
   Noida: [28.5355, 77.391],
   Faridabad: [28.4089, 77.3178],
   Chandigarh: [30.7333, 76.7794],
@@ -55,4 +56,37 @@ export function calculateFare(pickupCity, dropCity) {
     fare: Math.max(fare, MIN_FARE),
     distanceKm: Math.round(roadDistance),
   };
+}
+
+// ---------------------------------------------------------------------------
+// Fixed outstation routes — airport transfers & pilgrimage trips from Hisar.
+// Each row has a Small-car and Large-car price. Add more rows here anytime,
+// same shape: { from, to, small, large }. These take priority over the
+// distance-based estimate above whenever a pickup+drop pair matches.
+// ---------------------------------------------------------------------------
+export const FIXED_ROUTES = [
+  { from: "Hisar", to: "Delhi Airport", small: 2500, large: 3000 },
+  { from: "Hisar", to: "New Delhi", small: 2500, large: 3000 },
+  { from: "Hisar", to: "Nizamuddin", small: 3000, large: 3500 },
+  { from: "Hisar", to: "Hindon Airport", small: 3500, large: 4000 },
+  { from: "Hisar", to: "Jewar Airport", small: 4000, large: 4500 },
+  { from: "Hisar", to: "Khatu Shyam", small: 8000, large: 10000 },
+  { from: "Hisar", to: "Salasar", small: 8000, large: 10000 },
+  { from: "Hisar", to: "Gurugram", small: 2200, large: 2800 },
+  { from: "Hisar", to: "Chandigarh", small: 4000, large: 4500 },
+];
+
+function normalize(str) {
+  return str.trim().toLowerCase();
+}
+
+// Looks up a fixed route by pickup+drop (case/space-insensitive).
+// Returns { small, large } or null if this pair isn't a fixed route.
+export function getFixedFare(pickupCity, dropCity) {
+  const match = FIXED_ROUTES.find(
+    (r) =>
+      normalize(r.from) === normalize(pickupCity) &&
+      normalize(r.to) === normalize(dropCity)
+  );
+  return match ? { small: match.small, large: match.large } : null;
 }
