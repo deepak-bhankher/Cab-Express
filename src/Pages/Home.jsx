@@ -16,6 +16,7 @@ import {
   Loader2,
   ArrowLeft,
   Car,
+  CalendarClock,
 } from "lucide-react";
 import { createBooking } from "../lib/api";
 import { calculateFare, getFixedFare } from "../lib/fareCalculator";
@@ -152,6 +153,15 @@ function RouteDivider({ tone = "light" }) {
 
 const STEPS = { SEARCH: "search", FARE: "fare", DONE: "done" };
 
+// Formats a Date object into the "YYYY-MM-DDTHH:mm" string that
+// <input type="datetime-local" /> requires, using LOCAL time (not UTC).
+function toDatetimeLocalValue(date) {
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(
+    date.getHours()
+  )}:${pad(date.getMinutes())}`;
+}
+
 function BookingCard() {
   const [step, setStep] = useState(STEPS.SEARCH);
   const [pickup, setPickup] = useState("");
@@ -160,12 +170,14 @@ function BookingCard() {
   const [name, setName] = useState("");
   const [baseFares, setBaseFares] = useState(null);
   const [carType, setCarType] = useState("small");
+  const [rideDateTime, setRideDateTime] = useState(() => toDatetimeLocalValue(new Date()));
   const [distanceKm, setDistanceKm] = useState(null);
   const [isFixedRoute, setIsFixedRoute] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const baseFare = baseFares ? baseFares[carType] : 0;
+  const minRideDateTime = toDatetimeLocalValue(new Date());
 
   async function handleSearch(e) {
     e.preventDefault();
@@ -214,6 +226,15 @@ function BookingCard() {
       setError("Enter your name and a valid 10-digit phone number");
       return;
     }
+    if (!rideDateTime) {
+      setError("Select the date and time you want to travel");
+      return;
+    }
+    const chosenDate = new Date(rideDateTime);
+    if (chosenDate < new Date()) {
+      setError("Ride date & time can't be in the past");
+      return;
+    }
     setLoading(true);
     try {
       await createBooking({
@@ -223,6 +244,7 @@ function BookingCard() {
         dropLocation: drop.trim(),
         carType,
         fare: baseFare,
+        rideDateTime: chosenDate.toISOString(),
       });
       setStep(STEPS.DONE);
     } catch (err) {
@@ -240,6 +262,7 @@ function BookingCard() {
     setName("");
     setBaseFares(null);
     setCarType("small");
+    setRideDateTime(toDatetimeLocalValue(new Date()));
     setDistanceKm(null);
     setIsFixedRoute(false);
     setError("");
@@ -375,6 +398,25 @@ function BookingCard() {
                       </motion.button>
                     ))}
                   </div>
+                </div>
+
+                <div>
+                  <p className="font-data text-[11px] text-[#000428]/45 uppercase tracking-wide mb-2">
+                    When do you want to travel?
+                  </p>
+                  <div className="flex items-center gap-3 bg-[#F5F7FA] rounded-xl border border-[#000428]/10 px-4 py-3 focus-within:border-[#004e92] transition-colors">
+                    <CalendarClock size={18} className="text-[#004e92] shrink-0" />
+                    <input
+                      type="datetime-local"
+                      value={rideDateTime}
+                      min={minRideDateTime}
+                      onChange={(e) => setRideDateTime(e.target.value)}
+                      className="w-full bg-transparent outline-none font-body text-sm text-[#000428]"
+                    />
+                  </div>
+                  <p className="font-body text-[11px] text-[#000428]/45 mt-1.5">
+                    Book now for today, or pick any future date for an advance booking.
+                  </p>
                 </div>
 
                 <div className="space-y-3">
