@@ -17,6 +17,8 @@ import {
   ArrowLeft,
   Car,
   CalendarClock,
+  IdCard,
+  X,
 } from "lucide-react";
 import { createBooking } from "../lib/api";
 import { calculateFare, getFixedFare } from "../lib/fareCalculator";
@@ -171,6 +173,8 @@ function BookingCard() {
   const [baseFares, setBaseFares] = useState(null);
   const [carType, setCarType] = useState("small");
   const [rideDateTime, setRideDateTime] = useState(() => toDatetimeLocalValue(new Date()));
+  const [idPhotoFile, setIdPhotoFile] = useState(null);
+  const [idPhotoPreview, setIdPhotoPreview] = useState(null);
   const [distanceKm, setDistanceKm] = useState(null);
   const [isFixedRoute, setIsFixedRoute] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -178,6 +182,28 @@ function BookingCard() {
 
   const baseFare = baseFares ? baseFares[carType] : 0;
   const minRideDateTime = toDatetimeLocalValue(new Date());
+
+  function handleIdPhotoChange(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setError("ID photo must be an image file");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setError("ID photo must be under 5MB");
+      return;
+    }
+    setError("");
+    setIdPhotoFile(file);
+    setIdPhotoPreview(URL.createObjectURL(file));
+  }
+
+  function removeIdPhoto() {
+    if (idPhotoPreview) URL.revokeObjectURL(idPhotoPreview);
+    setIdPhotoFile(null);
+    setIdPhotoPreview(null);
+  }
 
   async function handleSearch(e) {
     e.preventDefault();
@@ -235,6 +261,10 @@ function BookingCard() {
       setError("Ride date & time can't be in the past");
       return;
     }
+    if (!idPhotoFile) {
+      setError("Please upload a photo of your ID (for driver safety verification)");
+      return;
+    }
     setLoading(true);
     try {
       await createBooking({
@@ -245,6 +275,7 @@ function BookingCard() {
         carType,
         fare: baseFare,
         rideDateTime: chosenDate.toISOString(),
+        idPhotoFile,
       });
       setStep(STEPS.DONE);
     } catch (err) {
@@ -263,6 +294,7 @@ function BookingCard() {
     setBaseFares(null);
     setCarType("small");
     setRideDateTime(toDatetimeLocalValue(new Date()));
+    removeIdPhoto();
     setDistanceKm(null);
     setIsFixedRoute(false);
     setError("");
@@ -416,6 +448,50 @@ function BookingCard() {
                   </div>
                   <p className="font-body text-[11px] text-[#000428]/45 mt-1.5">
                     Book now for today, or pick any future date for an advance booking.
+                  </p>
+                </div>
+
+                <div>
+                  <p className="font-data text-[11px] text-[#000428]/45 uppercase tracking-wide mb-2">
+                    Upload your ID (for driver safety)
+                  </p>
+                  {!idPhotoPreview ? (
+                    <label className="flex items-center gap-3 bg-[#F5F7FA] rounded-xl border border-dashed border-[#000428]/20 px-4 py-3.5 cursor-pointer hover:border-[#004e92]/50 transition-colors">
+                      <IdCard size={18} className="text-[#004e92] shrink-0" />
+                      <span className="font-body text-sm text-[#000428]/50">
+                        Tap to upload Aadhaar / license / ID photo
+                      </span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleIdPhotoChange}
+                        className="hidden"
+                      />
+                    </label>
+                  ) : (
+                    <div className="relative flex items-center gap-3 bg-[#F5F7FA] rounded-xl border border-[#004e92]/30 px-4 py-3">
+                      <img
+                        src={idPhotoPreview}
+                        alt="ID preview"
+                        className="w-11 h-11 rounded-lg object-cover shrink-0"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-body text-sm text-[#000428] font-semibold truncate">
+                          {idPhotoFile?.name}
+                        </p>
+                        <p className="font-body text-xs text-[#0EA894] font-medium">Ready to upload</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={removeIdPhoto}
+                        className="w-7 h-7 rounded-full bg-[#000428]/5 hover:bg-[#000428]/10 flex items-center justify-center shrink-0"
+                      >
+                        <X size={14} className="text-[#000428]/60" />
+                      </button>
+                    </div>
+                  )}
+                  <p className="font-body text-[11px] text-[#000428]/45 mt-1.5">
+                    Only used to verify you're a genuine passenger. Kept private.
                   </p>
                 </div>
 

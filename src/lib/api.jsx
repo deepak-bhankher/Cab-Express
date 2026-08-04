@@ -11,11 +11,25 @@ export async function getFare(pickupCity, dropCity) {
   return res.json();
 }
 
+// `data` can include an `idPhotoFile` key holding a File object (from an
+// <input type="file" />). Everything is sent as multipart/form-data so the
+// backend (multer + Cloudinary) can receive the actual image bytes.
 export async function createBooking(data) {
+  const formData = new FormData();
+
+  Object.entries(data).forEach(([key, value]) => {
+    if (key === "idPhotoFile") {
+      if (value) formData.append("idPhoto", value);
+    } else if (value !== undefined && value !== null) {
+      formData.append(key, value);
+    }
+  });
+
   const res = await fetch(`${API_BASE}/bookings`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
+    // No Content-Type header here — the browser sets the correct
+    // multipart boundary automatically when the body is FormData.
+    body: formData,
   });
   if (!res.ok) throw new Error("Booking failed, please try again");
   return res.json();
