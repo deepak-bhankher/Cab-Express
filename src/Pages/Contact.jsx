@@ -42,7 +42,7 @@ const contactInfo = [
   {
     icon: Phone,
     title: "Call us",
-    text: "+91 12345 67890",
+    text: "+91 96252 44217",
     sub: "Mon - Sun, 24/7 support",
   },
   {
